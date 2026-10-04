@@ -83,12 +83,25 @@ function puntuacion(texto){
   if(texto.includes('?')) score += 2;
   return Math.max(score,1);
 }
-function juzgar(){
+async function juzgar(){
   const ta=a.value.trim(), tb=b.value.trim();
   if(ta.length < 15 || tb.length < 15){
     alert('Escribe un poco más en las dos versiones para que El Jurado pueda valorar el caso.');
     return;
   }
+  // V2: si hay backend de IA configurado, úsalo; si no, conserva el prototipo local.
+  try {
+    const res = await fetch('/api/veredicto', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({personaA:ta,personaB:tb})});
+    if(res.ok){
+      const data=await res.json();
+      document.getElementById('porcentajeA').textContent=data.porcentajeA+'%';
+      document.getElementById('porcentajeB').textContent=data.porcentajeB+'%';
+      document.getElementById('veredicto').textContent='⚖️ '+data.veredicto;
+      document.getElementById('explicacion').textContent=data.explicacion;
+      document.getElementById('consejo').innerHTML='<strong>Consejo del Jurado:</strong> '+data.consejo;
+      resultado.style.display='block'; resultado.scrollIntoView({behavior:'smooth',block:'start'}); return;
+    }
+  } catch(e) {}
   const sa=puntuacion(ta), sb=puntuacion(tb), total=sa+sb;
   let pa=Math.round((sa/total)*100);
   pa=Math.max(35,Math.min(65,pa));
