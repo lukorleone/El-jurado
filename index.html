@@ -3,122 +3,121 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+<meta name="theme-color" content="#5b36d6">
 <title>El Jurado</title>
-
 <style>
-* {
-  box-sizing: border-box;
-}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(180deg,#f3f0ff,#faf9ff);color:#222}
+.app{max-width:600px;margin:auto;padding:25px 18px 45px}
+.logo{text-align:center;font-size:58px}
+h1{text-align:center;color:#5b36d6;font-size:40px;margin:5px 0}
+.subtitulo{text-align:center;color:#666;line-height:1.5;margin-bottom:25px}
+.tarjeta{background:#fff;padding:22px;border-radius:22px;box-shadow:0 8px 25px rgba(0,0,0,.08)}
+.bloque{margin-bottom:22px}
+label{display:block;font-size:18px;font-weight:bold;margin-bottom:8px}
+.persona-a{color:#5b36d6}.persona-b{color:#d04478}
+textarea{width:100%;height:135px;padding:14px;border:2px solid #ddd;border-radius:14px;font-family:Arial,sans-serif;font-size:16px;resize:vertical}
+textarea:focus{outline:none;border-color:#5b36d6}
+button{width:100%;border:0;border-radius:15px;padding:17px;background:#5b36d6;color:#fff;font-size:18px;font-weight:bold;cursor:pointer}
+button:active{transform:scale(.98)}
+button:disabled{opacity:.55;cursor:not-allowed}
+.aviso{font-size:13px;color:#777;text-align:center;line-height:1.4;margin:13px 4px 0}
+#resultado{display:none;margin-top:22px;background:#f1edff;border-radius:18px;padding:20px}
+.veredicto{text-align:center;font-size:25px;font-weight:bold;color:#5b36d6;margin-bottom:15px}
+.porcentajes{display:flex;gap:10px;margin:18px 0}
+.porcentaje{flex:1;background:#fff;border-radius:14px;padding:14px 8px;text-align:center;font-weight:bold}
+.porcentaje strong{display:block;font-size:27px;margin-top:5px}
+.explicacion{background:#fff;border-radius:14px;padding:16px;line-height:1.55}
+.consejo{margin-top:12px;padding:14px;border-left:4px solid #5b36d6;background:#fff;border-radius:10px;line-height:1.5}
+.reiniciar{margin-top:15px;background:#fff;color:#5b36d6;border:2px solid #5b36d6}
+.pie{text-align:center;color:#999;font-size:12px;margin-top:22px}
+</style>
+</head>
+<body>
+<main class="app">
+  <div class="logo">⚖️</div>
+  <h1>El Jurado</h1>
+  <p class="subtitulo">Cuéntanos las dos versiones de una discusión. El Jurado analizará los argumentos y dará un veredicto razonado.</p>
 
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: linear-gradient(180deg,#f3f0ff,#faf9ff);
-  color: #222;
-}
+  <section class="tarjeta">
+    <div class="bloque">
+      <label class="persona-a" for="versionA">👤 Persona A</label>
+      <textarea id="versionA" maxlength="2000" placeholder="Cuenta aquí tu versión de lo ocurrido..."></textarea>
+    </div>
 
-.app {
-  max-width: 600px;
-  margin: auto;
-  padding: 25px 18px 45px;
-}
+    <div class="bloque">
+      <label class="persona-b" for="versionB">👤 Persona B</label>
+      <textarea id="versionB" maxlength="2000" placeholder="Cuenta aquí la otra versión..."></textarea>
+    </div>
 
-.logo {
-  text-align: center;
-  font-size: 58px;
-}
+    <button id="juzgar" type="button">⚖️ Que decida El Jurado</button>
+    <p class="aviso">El resultado es orientativo y busca ayudar a entender ambas posturas. No sustituye asesoramiento profesional.</p>
 
-h1 {
-  text-align: center;
-  color: #5b36d6;
-  font-size: 40px;
-  margin: 5px 0;
-}
+    <div id="resultado" aria-live="polite">
+      <div class="veredicto" id="veredicto"></div>
+      <div class="porcentajes">
+        <div class="porcentaje persona-a">Persona A<strong id="porcentajeA">50%</strong></div>
+        <div class="porcentaje persona-b">Persona B<strong id="porcentajeB">50%</strong></div>
+      </div>
+      <div class="explicacion" id="explicacion"></div>
+      <div class="consejo" id="consejo"></div>
+      <button class="reiniciar" id="reiniciar" type="button">Juzgar otro caso</button>
+    </div>
+  </section>
+  <div class="pie">El Jurado · Primera versión</div>
+</main>
 
-.subtitulo {
-  text-align: center;
-  color: #666;
-  line-height: 1.5;
-  margin-bottom: 25px;
-}
+<script>
+const a = document.getElementById('versionA');
+const b = document.getElementById('versionB');
+const resultado = document.getElementById('resultado');
 
-.tarjeta {
-  background: white;
-  padding: 22px;
-  border-radius: 22px;
-  box-shadow: 0 8px 25px rgba(0,0,0,.08);
+function palabras(texto){
+  return texto.toLowerCase().match(/[a-záéíóúüñ0-9]+/g) || [];
 }
+function puntuacion(texto){
+  const p = palabras(texto);
+  const conectores = ['porque','pero','aunque','cuando','entonces','además','también','entiendo','perdón','acuerdo','hablar'];
+  let score = Math.min(p.length,180);
+  conectores.forEach(c => { if(p.includes(c)) score += 5; });
+  if(texto.includes('?')) score += 2;
+  return Math.max(score,1);
+}
+function juzgar(){
+  const ta=a.value.trim(), tb=b.value.trim();
+  if(ta.length < 15 || tb.length < 15){
+    alert('Escribe un poco más en las dos versiones para que El Jurado pueda valorar el caso.');
+    return;
+  }
+  const sa=puntuacion(ta), sb=puntuacion(tb), total=sa+sb;
+  let pa=Math.round((sa/total)*100);
+  pa=Math.max(35,Math.min(65,pa));
+  const pb=100-pa;
 
-.bloque {
-  margin-bottom: 22px;
-}
+  document.getElementById('porcentajeA').textContent=pa+'%';
+  document.getElementById('porcentajeB').textContent=pb+'%';
 
-label {
-  display: block;
-  font-size: 18px;
-  font-weight: bold;
-  margin-bottom: 8px;
+  let v,exp;
+  if(Math.abs(pa-pb)<=4){
+    v='⚖️ Veredicto: empate';
+    exp='Las dos posturas tienen argumentos comparables. El Jurado considera que aquí importa menos buscar un ganador y más aclarar qué esperaba cada persona y qué se comunicó realmente.';
+  } else if(pa>pb){
+    v='⚖️ El Jurado se inclina por Persona A';
+    exp='La versión de Persona A presenta algo más de contexto y razonamiento según este análisis inicial. Eso no significa que Persona B esté equivocada en todo: su punto de vista también debe tenerse en cuenta.';
+  } else {
+    v='⚖️ El Jurado se inclina por Persona B';
+    exp='La versión de Persona B presenta algo más de contexto y razonamiento según este análisis inicial. Eso no significa que Persona A esté equivocada en todo: su punto de vista también debe tenerse en cuenta.';
+  }
+  document.getElementById('veredicto').textContent=v;
+  document.getElementById('explicacion').textContent=exp;
+  document.getElementById('consejo').innerHTML='<strong>Consejo del Jurado:</strong> intentad separar los hechos de las interpretaciones y acordar una solución concreta que ambos podáis cumplir.';
+  resultado.style.display='block';
+  resultado.scrollIntoView({behavior:'smooth',block:'start'});
 }
-
-.persona-a {
-  color: #5b36d6;
-}
-
-.persona-b {
-  color: #d04478;
-}
-
-textarea {
-  width: 100%;
-  height: 135px;
-  padding: 14px;
-  border: 2px solid #ddd;
-  border-radius: 14px;
-  font-family: Arial, sans-serif;
-  font-size: 16px;
-  resize: vertical;
-}
-
-textarea:focus {
-  outline: none;
-  border-color: #5b36d6;
-}
-
-button {
-  width: 100%;
-  border: 0;
-  border-radius: 15px;
-  padding: 17px;
-  background: #5b36d6;
-  color: white;
-  font-size: 18px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-button:active {
-  transform: scale(.98);
-}
-
-#resultado {
-  display: none;
-  margin-top: 22px;
-  background: #f1edff;
-  border-radius: 18px;
-  padding: 20px;
-}
-
-.veredicto {
-  text-align: center;
-  font-size: 25px;
-  font-weight: bold;
-  color: #5b36d6;
-  margin-bottom: 15px;
-}
-
-.porcentajes {
-  display: flex;
-  gap: 10px;
-  margin: 18px 0;
-}
+document.getElementById('juzgar').addEventListener('click',juzgar);
+document.getElementById('reiniciar').addEventListener('click',()=>{
+  a.value=''; b.value=''; resultado.style.display='none'; a.focus(); window.scrollTo({top:0,behavior:'smooth'});
+});
+</script>
+</body>
+</html>
